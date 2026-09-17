@@ -171,7 +171,31 @@ spec:
 
 ### Trigger Authentication
 
-KEDA needs AWS credentials for SQS. Store them in a K8s Secret:
+KEDA needs credentials to access external event sources (SQS, SNS, Kafka, etc.). **TriggerAuthentication** is a Kubernetes resource that securely stores and injects these credentials into scalers.
+
+#### Why Separate Authentication?
+
+Rather than embedding secrets in ScaledJob definitions, KEDA uses a dedicated `TriggerAuthentication` resource:
+- **Reusability**: One auth resource, multiple scalers
+- **Security**: Secrets stored in K8s Secret; not in ScaledJob spec
+- **Flexibility**: Swap credentials without modifying ScaledJob
+- **Auditing**: Track credential usage via K8s audit logs
+
+#### How It Works
+
+```
+ScaledJob
+  └── triggers[0].authenticationRef
+        └── name: "aws-credentials-trigger"
+              └── TriggerAuthentication: "aws-credentials-trigger"
+                    └── secretTargetRef
+                          └── Secret: "aws-credentials"
+                                └── AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+```
+
+#### Minimal Example
+
+1. **Create a K8s Secret** (stores actual credentials):
 
 ```yaml
 apiVersion: v1
@@ -182,20 +206,56 @@ type: Opaque
 stringData:
   AWS_ACCESS_KEY_ID: "your-key-id"
   AWS_SECRET_ACCESS_KEY: "your-secret"
----
+```
+
+2. **Create a TriggerAuthentication** (maps Secret fields to scaler parameters):
+
+```yaml
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: aws-credentials-trigger
 spec:
   secretTargetRef:
-  - parameter: awsAccessKeyId
-    name: aws-credentials
-    key: AWS_ACCESS_KEY_ID
+  - parameter: awsAccessKeyId          # Scaler expects this param
+    name: aws-credentials               # K8s Secret name
+    key: AWS_ACCESS_KEY_ID              # Secret key
   - parameter: awsSecretAccessKey
     name: aws-credentials
     key: AWS_SECRET_ACCESS_KEY
 ```
+
+3. **Reference in ScaledJob**:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: demo-sqs-job
+spec:
+  triggers:
+  - type: aws-sqs-queue
+    metadata:
+      queueURL: "https://sqs.us-east-1.amazonaws.com/123456789/my-queue"
+      awsRegion: "us-east-1"
+    authenticationRef:                  # ← Link to TriggerAuthentication
+      name: aws-credentials-trigger
+```
+
+#### Authentication Methods
+
+KEDA supports multiple auth methods:
+
+| Method | Use | Example |
+|--------|-----|---------|
+| `secretTargetRef` | K8s Secret fields | AWS IAM keys, API tokens |
+| `env` | Pod environment | `$AWS_ACCESS_KEY_ID` |
+| `hashiCorpVault` | HashiCorp Vault | Production secrets management |
+| `azureKeyVault` | Azure Key Vault | For AKS clusters |
+| `awsSecretsManager` | AWS Secrets Manager | Fetch from AWS, not K8s |
+| `gcp` | GCP Service Accounts | For GKE clusters |
+
+For SQS/SNS in our POC, **secretTargetRef** (K8s Secret) is simplest.
 
 ---
 
@@ -243,6 +303,261 @@ make keda-up            # Installs KEDA
 make build              # Builds handler image
 make demo-sqs N=20      # Sends 20 messages → 20 jobs spawn
 make demo-sns N=20      # SNS → SQS subscription → 20 jobs
+```
+
+---
+
+## Part 4.5: Deep Dive - SQS & SNS Trigger Mechanisms
+
+### SQS Trigger: How KEDA Scales Based on Queue Depth
+
+The SQS scaler is KEDA's most common trigger. Here's how it works end-to-end:
+
+#### 1. Polling Loop (Every 5 seconds by default)
+
+```
+KEDA Operator (running in keda namespace)
+  ├─ Every pollingInterval seconds (e.g., 5s):
+  │   ├─ Retrieve TriggerAuthentication → extract AWS credentials
+  │   ├─ Call SQS API: GetQueueAttributes(QueueURL, "ApproximateNumberOfMessages")
+  │   ├─ Get queue depth (e.g., 20 messages)
+  │   ├─ Calculate desired job replicas: depth / batchSize
+  │   │   (e.g., 20 messages / 1 msg per job = 20 jobs)
+  │   ├─ Compare to current job count
+  │   ├─ If desired > current: Create new Jobs
+  │   └─ If desired < current: Delete excess Jobs
+  └─ Repeat
+```
+
+#### 2. Concrete Example
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: sqs-processor
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: handler
+          image: myapp:latest
+          env:
+          - name: SQS_QUEUE_URL
+            value: "https://sqs.us-east-1.amazonaws.com/123456789/myqueue"
+  
+  pollingInterval: 5              # Check queue depth every 5 seconds
+  minReplicaCount: 0              # Minimum jobs (0 = true serverless)
+  maxReplicaCount: 20             # Maximum concurrent jobs
+  
+  triggers:
+  - type: aws-sqs-queue
+    metadata:
+      queueURL: "https://sqs.us-east-1.amazonaws.com/123456789/myqueue"
+      awsRegion: "us-east-1"
+      batchSize: "1"              # One message per job
+      messageDelay: "0"           # Ignore delay attributes
+      visibilityTimeout: "300"    # 5-min timeout (must match handler timeout)
+      scalingModulus: "1"         # Scale 1:1 with queue depth
+      awsEndpoint: ""             # Use AWS; for LocalStack: "http://localstack:4566"
+      identityOwner: "operator"   # Use KEDA pod's IAM role (or "workload" for job's role)
+    authenticationRef:
+      name: aws-credentials
+```
+
+#### 3. Message Flow & Visibility Timeout
+
+**Important**: When a job receives a message, SQS marks it as "in-flight" (invisible to other consumers) for `visibilityTimeout` seconds.
+
+```
+T=0s: Message arrives in queue
+      Queue depth: 1
+      KEDA detects depth=1 → Creates Job #1
+
+T=1s: Job #1 starts
+      SQS hides message (visibility timeout = 300s)
+      Queue visible depth: 0
+      KEDA sees depth=0 → No new jobs
+
+T=120s: Job #1 completes
+        Job deletes message from SQS
+        Message gone permanently
+
+T=301s: (If Job #1 crashes without deleting)
+        Visibility timeout expires
+        Message reappears in queue
+        KEDA may recreate job
+```
+
+**Best practice**: `visibilityTimeout` ≥ job execution time + buffer.
+
+#### 4. Metadata Breakdown
+
+| Parameter | Purpose | Example |
+|-----------|---------|---------|
+| `queueURL` | Full SQS queue URL | `https://sqs.us-east-1.amazonaws.com/123456789/myqueue` |
+| `awsRegion` | AWS region | `us-east-1` |
+| `batchSize` | Messages per job (default 5) | `1` (one message per job = Lambda-like) |
+| `messageDelay` | Ignore delay on messages (0=no, 1=yes) | `0` |
+| `visibilityTimeout` | How long to hide message after receive | `300` (seconds) |
+| `scalingModulus` | Scale factor (1 = 1:1 with depth) | `1` |
+| `awsEndpoint` | Custom endpoint (LocalStack, etc.) | `http://localstack:4566` |
+| `identityOwner` | Use operator or workload IAM role | `operator` or `workload` |
+
+#### 5. Real SQS Scaler Behavior
+
+```python
+# Pseudocode inside KEDA's SQS scaler
+def get_queue_depth():
+    resp = sqs_client.get_queue_attributes(
+        QueueUrl=queue_url,
+        AttributeNames=['ApproximateNumberOfMessages']
+    )
+    return int(resp['Attributes']['ApproximateNumberOfMessages'])
+
+def calculate_desired_replicas():
+    depth = get_queue_depth()
+    batch_size = config['batchSize']  # e.g., 1
+    desired = max(minReplicas, min(depth // batch_size, maxReplicas))
+    return desired
+
+# Every pollingInterval:
+desired = calculate_desired_replicas()
+current = count_running_jobs()
+if desired > current:
+    create_jobs(desired - current)
+elif desired < current:
+    delete_jobs(current - desired)
+```
+
+---
+
+### SNS → SQS → KEDA Trigger Chain
+
+SNS (Simple Notification Service) doesn't have native KEDA scaler. Instead, use the **SNS → SQS subscription** pattern:
+
+#### Pattern Flow
+
+```
+SNS Topic (demo-topic)
+  ├─ Publish event
+  │   └─ Event sent to all subscribers
+  └─ Subscriber: SQS Queue (demo-sns-queue)
+        └─ Message lands in queue
+              └─ KEDA SQS scaler detects it
+                    └─ Spawns job
+```
+
+#### Setup
+
+1. **Create SNS topic and SQS queue** (same AWS account/region):
+
+```bash
+aws sns create-topic --name demo-topic --region us-east-1
+aws sqs create-queue --queue-name demo-sns-queue --region us-east-1
+```
+
+2. **Subscribe queue to topic**:
+
+```bash
+TOPIC_ARN="arn:aws:sns:us-east-1:123456789:demo-topic"
+QUEUE_ARN="arn:aws:sqs:us-east-1:123456789:demo-sns-queue"
+QUEUE_URL="https://sqs.us-east-1.amazonaws.com/123456789/demo-sns-queue"
+
+aws sns subscribe \
+  --topic-arn $TOPIC_ARN \
+  --protocol sqs \
+  --notification-endpoint $QUEUE_ARN \
+  --region us-east-1
+
+# Allow SNS to write to SQS (trust policy)
+aws sqs set-queue-attributes \
+  --queue-url $QUEUE_URL \
+  --attributes file://policy.json
+```
+
+3. **Use SQS ScaledJob** (as before):
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: sns-processor
+spec:
+  triggers:
+  - type: aws-sqs-queue
+    metadata:
+      queueURL: "https://sqs.us-east-1.amazonaws.com/123456789/demo-sns-queue"
+      awsRegion: "us-east-1"
+      batchSize: "1"
+    # ... rest same as SQS example
+```
+
+4. **Publish to SNS**:
+
+```bash
+aws sns publish \
+  --topic-arn $TOPIC_ARN \
+  --message "Hello from SNS" \
+  --region us-east-1
+```
+
+**Result**: Message → SNS → SQS queue → KEDA detects → Job spawns.
+
+#### Event Format in Job
+
+When SNS publishes to SQS, the message body contains the SNS envelope:
+
+```json
+{
+  "Type": "Notification",
+  "MessageId": "abc123",
+  "TopicArn": "arn:aws:sns:us-east-1:123456789:demo-topic",
+  "Message": "Hello from SNS",
+  "Timestamp": "2026-09-17T04:00:00.000Z",
+  "SignatureVersion": "1",
+  "Signature": "...",
+  "SigningCertURL": "...",
+  "UnsubscribeURL": "..."
+}
+```
+
+Job handler must parse the `Message` field:
+
+```python
+import json
+
+def lambda_handler(event, context):
+    # SQS message body contains SNS envelope
+    sns_msg = json.loads(event.get('body', '{}'))
+    actual_message = sns_msg.get('Message', '')
+    
+    logger.info(f"Received from SNS: {actual_message}")
+    # Process...
+```
+
+#### LocalStack Example
+
+In our POC, we use LocalStack to mock both SNS and SQS:
+
+```bash
+# LocalStack endpoints (same service on port 4566)
+SNS_ENDPOINT="http://localhost:4566"
+SQS_ENDPOINT="http://localhost:4566"
+
+# Create topic
+awslocal sns create-topic --name demo-topic --endpoint-url $SNS_ENDPOINT
+
+# Create queue
+awslocal sqs create-queue --queue-name demo-sns-queue --endpoint-url $SQS_ENDPOINT
+
+# Subscribe (note: LocalStack URIs use 000000000000 as fake account)
+awslocal sns subscribe \
+  --topic-arn arn:aws:sns:us-east-1:000000000000:demo-topic \
+  --protocol sqs \
+  --notification-endpoint arn:aws:sqs:us-east-1:000000000000:demo-sns-queue \
+  --endpoint-url $SNS_ENDPOINT
 ```
 
 ---
