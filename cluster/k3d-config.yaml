@@ -1,0 +1,33 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: keda-lambda
+servers: 1
+agents: 2
+image: rancher/k3s:latest
+ports:
+  - port: 4566:4566
+    nodeFilters:
+      - loadbalancer
+    description: LocalStack SQS/SNS (localhost:4566)
+  - port: 6379:6379
+    nodeFilters:
+      - loadbalancer
+    description: Redis (optional, for future caching)
+volumes:
+  - volume: /tmp/k3d-localstack:/tmp/localstack
+    nodeFilters:
+      - server:0
+    description: LocalStack data persistence
+options:
+  k3s:
+    extraArgs:
+      - arg: --disable=servicelb
+        nodeFilters:
+          - server:*
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true

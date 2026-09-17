@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack
+  labels:
+    app: localstack
+spec:
+  type: NodePort
+  ports:
+  - port: 4566
+    targetPort: 4566
+    nodePort: 4566
+    name: api
+  selector:
+    app: localstack

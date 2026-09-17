@@ -1,0 +1,35 @@
+# KEDA Helm Chart Values
+# Minimal overrides for KEDA operator installation
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/kedacore/keda-operator
+  pullPolicy: IfNotPresent
+  tag: ""
+
+serviceAccount:
+  create: true
+  name: keda-operator
+
+rbac:
+  create: true
+
+metricsServer:
+  useHostNetwork: false
+
+podAnnotations: {}
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1000Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
