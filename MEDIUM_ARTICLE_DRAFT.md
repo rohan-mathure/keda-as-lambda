@@ -601,10 +601,157 @@ KEDA supports 50+ trigger types:
 | `aws-sqs-queue` | Process SQS messages | queueURL, region, credentials |
 | `aws-sns` | N/A (route to SQS) | SNS → SQS subscription |
 | `kafka` | Kafka topics | brokers, topic, consumer group |
-| `cron` | Schedule jobs | cron expression (e.g., `0 * * * *`) |
+| `cron` | Schedule jobs (batch, cleanup, reports) | cron expression (e.g., `0 * * * *`) |
 | `http` | HTTP polling | endpoint, method |
 | `rabbitmq` | RabbitMQ queues | connection string, queue name |
 | `nats` | NATS subjects | nats:// URL, subject |
+
+#### Cron Trigger Deep Dive
+
+The **cron scaler** enables scheduled, predictable workloads without requiring external job schedulers (like Jenkins, Airflow, or Lambda scheduled events).
+
+**Use Cases**:
+- Nightly batch reports (10 PM)
+- Hourly data aggregation
+- Daily cleanup jobs (delete temp files, purge old logs)
+- Weekly reconciliation tasks
+- Peak-hour scaling (scale up 9 AM–5 PM, scale down evenings)
+
+**Cron Expression Format**: Standard Unix cron `(minute hour day month weekday)`
+
+```
+┌──────── minute (0–59)
+│ ┌────── hour (0–23)
+│ │ ┌──── day (1–31)
+│ │ │ ┌── month (1–12)
+│ │ │ │ ┌ weekday (0–6, where 0=Sunday)
+│ │ │ │ │
+* * * * *
+```
+
+**Common Patterns**:
+
+| Pattern | Meaning | Example Use |
+|---------|---------|-------------|
+| `0 2 * * *` | 2 AM daily | Nightly batch |
+| `0 */4 * * *` | Every 4 hours | Hourly cleanup, every 4 cycles |
+| `0 9-17 * * 1-5` | 9 AM–5 PM weekdays | Business hours scaling |
+| `0 22 * * *` | 10 PM daily | Start long-running job (finishes overnight) |
+| `*/15 * * * *` | Every 15 minutes | Frequent polling/sync task |
+
+**KEDA Cron Scaler Example** (scheduled batch job):
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: nightly-report-job
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: report-generator
+          image: analytics:latest
+          env:
+          - name: REPORT_TYPE
+            value: "daily"
+  pollingInterval: 60
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  triggers:
+  - type: cron
+    metadata:
+      timezone: America/New_York
+      start: 0 22 * * *           # Start: 10 PM daily
+      end: 30 23 * * *            # End: 10:30 PM daily
+      desiredReplicas: "3"        # Run 3 concurrent jobs during window
+```
+
+**Flow**:
+```
+10:00 PM (22:00): KEDA sees cron matched → Creates 3 jobs
+10:01 PM: Jobs running in parallel
+10:25 PM: Jobs complete, jobs exit
+10:31 PM: Outside window (end=10:30 PM) → KEDA scales down to 0
+```
+
+**Peak-Hours Example** (dynamic scaling based on time of day):
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: time-based-worker
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: worker
+          image: myapp:latest
+  triggers:
+  - type: cron
+    metadata:
+      timezone: UTC
+      start: 0 9 * * 1-5          # 9 AM on weekdays (Mon-Fri)
+      end: 0 17 * * 1-5           # 5 PM on weekdays
+      desiredReplicas: "20"       # Peak hours: 20 concurrent
+  - type: cron
+    metadata:
+      timezone: UTC
+      start: 0 17 * * *           # 5 PM daily
+      end: 0 9 * * 1-5            # 9 AM next weekday
+      desiredReplicas: "3"        # Off-peak: 3 concurrent
+```
+
+**Two triggers** = two time windows with different replica counts. KEDA applies whichever matches current time.
+
+**Advantages vs Lambda Scheduled Events**:
+
+| Aspect | KEDA Cron | Lambda EventBridge |
+|--------|-----------|-------------------|
+| **Scheduling** | Native cron | EventBridge rules (proprietary) |
+| **Visibility** | Kubernetes Jobs (kubectl logs) | CloudWatch Logs only |
+| **Timezone support** | IANA timezones (`America/New_York`, etc.) | UTC only (manual offset) |
+| **Multiple windows** | Chain multiple cron triggers | One rule per schedule |
+| **Cost** | Fixed node cost | Pay per invocation |
+| **Concurrency** | Adjustable via desiredReplicas | Sequential (one invocation per trigger) |
+
+**Cost Example** (scheduled batch):
+
+```
+Lambda: $0.20 per 1M + compute = ~$0.01/day for nightly job
+KEDA: Fixed node cost $30/month whether jobs run or not
+```
+
+Lambda wins for infrequent jobs; KEDA wins if combined with queue-driven load.
+
+---
+
+#### Combining Cron + Event-Driven Scaling
+
+Real power: Use cron to **pre-warm pools** before peak queue traffic:
+
+```yaml
+# Cron: Scale up at 8:50 AM (10 min before peak)
+- type: cron
+  metadata:
+    timezone: America/New_York
+    start: 50 8 * * 1-5
+    end: 0 9 * * 1-5
+    desiredReplicas: "5"        # Warm pool
+
+# SQS: Event-driven scale during peak (9 AM–5 PM)
+- type: aws-sqs-queue
+  metadata:
+    queueURL: "https://sqs.us-east-1.amazonaws.com/123456789/tasks"
+    batchSize: "1"
+  authenticationRef:
+    name: aws-credentials
+```
+
+When 9 AM arrives, queue-driven scaling takes over. Pre-warmed pods handle spike without cold-start delay.
 
 ---
 
