@@ -11,7 +11,7 @@ AWS Lambda has dominated the serverless landscape for years, offering pay-per-in
 
 **KEDA** (Kubernetes Event-Driven Autoscaling) offers a compelling alternative: bring serverless semantics to your Kubernetes cluster.
 
-In this article, we'll explore what KEDA is, why you might choose it over Lambda, how to build Lambda-like workloads on it, and what our proof-of-concept revealed about governance, cost, and operational trade-offs.
+In this article, I'll explore what KEDA is, why you might choose it over Lambda, how to build Lambda-like workloads on it, and what my proof-of-concept revealed about governance, cost, and operational trade-offs.
 
 ---
 
@@ -46,6 +46,8 @@ If you're already running Kubernetes (EKS, GKE, AKS, or self-managed), you have:
 
 ## Part 2: What is KEDA?
 
+I'll start with the basics.
+
 ### The Core Idea
 
 **KEDA** = Kubernetes Event-Driven Autoscaling
@@ -63,7 +65,7 @@ KEDA extends Kubernetes with two new resource types:
 | **Cleanup** | Automatic (pod deleted after job) | Manual (replica remains) |
 | **Use case** | Batch jobs, event processing | Long-running services |
 
-For Lambda-like workloads, **ScaledJob is the right choice**.
+For Lambda-like workloads, I use **ScaledJob**.
 
 ### How It Works
 
@@ -91,7 +93,7 @@ Event Source (SQS, Kafka, etc.)
 
 ### Project Structure
 
-Our POC uses this structure:
+My POC uses this structure:
 
 ```
 keda-as-lambda/
@@ -114,7 +116,7 @@ keda-as-lambda/
 
 ### The Handler
 
-Our `workload/handler.py` mimics a Lambda handler:
+My `workload/handler.py` mimics a Lambda handler:
 
 ```python
 def lambda_handler(event, context):
@@ -255,7 +257,7 @@ KEDA supports multiple auth methods:
 | `awsSecretsManager` | AWS Secrets Manager | Fetch from AWS, not K8s |
 | `gcp` | GCP Service Accounts | For GKE clusters |
 
-For SQS/SNS in our POC, **secretTargetRef** (K8s Secret) is simplest.
+For SQS/SNS in my POC, **secretTargetRef** (K8s Secret) is simplest.
 
 ---
 
@@ -275,7 +277,7 @@ cd keda-as-lambda
 
 ### Quick Start (Cron Demo)
 
-For a dependency-free demo, use the Cron trigger:
+For a dependency-free demo, I use the Cron trigger:
 
 ```bash
 # 1. Create cluster
@@ -293,7 +295,7 @@ kubectl get jobs -n demo -w
 
 ### Full Demo (SQS + SNS)
 
-For a realistic test with message queues:
+For a realistic test with message queues, I run:
 
 ```bash
 make cluster-up
@@ -539,7 +541,7 @@ def lambda_handler(event, context):
 
 #### LocalStack Example
 
-In our POC, we use LocalStack to mock both SNS and SQS:
+In my POC, I use LocalStack to mock both SNS and SQS:
 
 ```bash
 # LocalStack endpoints (same service on port 4566)
@@ -762,9 +764,9 @@ When 9 AM arrives, queue-driven scaling takes over. Pre-warmed pods handle spike
 KEDA jobs are native Kubernetes workloads:
 - ✅ Subject to the same RBAC policies
 - ✅ Visible in `kubectl get pods`
-- ✅ Integrated with your observability stack (Prometheus, Grafana)
+- ✅ Integrated with existing observability stack (Prometheus, Grafana)
 - ✅ Auditable via Kubernetes audit logs
-- ✅ Can use the same namespaces, quotas, and network policies
+- ✅ Use the same namespaces, quotas, and network policies
 
 Lambda, by contrast, is managed by AWS:
 - ❌ Separate IAM policies
@@ -784,7 +786,7 @@ Lambda, by contrast, is managed by AWS:
 
 ### Cost Comparison
 
-We modeled three scenarios:
+I modeled three scenarios:
 
 #### Scenario 1: Small Workload (100K–2M invocations/month)
 - **Lambda**: Free tier covers 1M invocations/month + 400K GB-seconds
@@ -860,7 +862,7 @@ Lambda is simpler. KEDA requires Kubernetes expertise.
 
 ### Extend the POC
 
-The repo includes a full working example. Next steps:
+The repo includes a full working example. To extend this work:
 1. **Add more triggers**: Kafka, HTTP, Postgres, RabbitMQ
 2. **Implement keep-alive pools**: Pre-warm pods to reduce cold start
 3. **Add cost tracking**: Export metrics to cost analyzer
@@ -883,7 +885,7 @@ KEDA brings serverless semantics to Kubernetes without Lambda's constraints. For
 
 Lambda remains superior for simplicity and low-latency use cases. The optimal choice depends on your workload profile, team expertise, and existing infrastructure.
 
-**Try it**: Clone the [keda-as-lambda](https://github.com/rohan-mathure/keda-as-lambda) repo and run `make demo-sqs N=10`. You'll see KEDA spawn 10 jobs in seconds.
+**Try it**: Clone the [keda-as-lambda](https://github.com/rohan-mathure/keda-as-lambda) repo and run `make demo-sqs N=10`. I built this to be runnable in minutes.
 
 ---
 
