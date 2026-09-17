@@ -1,0 +1,23 @@
+{
+  "packages": [
+    "go@latest",
+    "docker@latest",
+    "kubernetes-helm@latest",
+    "python@3.12",
+    "git@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo '🎯 KEDA-as-Lambda Development Environment'",
+      "echo 'Quick start: make cluster-up && make keda-up && make demo-sqs N=5'"
+    ],
+    "scripts": {
+      "bootstrap": [
+        "pip install -q boto3 awscli-local",
+        "pip install -q -r load-generator/requirements.txt",
+        "pip install -q -r workload/requirements.txt",
+        "echo '✅ Ready to go!'"
+      ]
+    }
+  }
+}
