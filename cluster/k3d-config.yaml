@@ -6,19 +6,16 @@ servers: 1
 agents: 2
 image: rancher/k3s:latest
 ports:
-  - port: 4566:4566
+  - port: 4566:30566
     nodeFilters:
       - loadbalancer
-    description: LocalStack SQS/SNS (localhost:4566)
-  - port: 6379:6379
+  - port: 6379:30379
     nodeFilters:
       - loadbalancer
-    description: Redis (optional, for future caching)
 volumes:
   - volume: /tmp/k3d-localstack:/tmp/localstack
     nodeFilters:
       - server:0
-    description: LocalStack data persistence
 options:
   k3s:
     extraArgs:
@@ -28,6 +25,3 @@ options:
       - arg: --disable=traefik
         nodeFilters:
           - server:*
-  kubeconfig:
-    updateDefaultKubeconfig: true
-    switchCurrentContext: true

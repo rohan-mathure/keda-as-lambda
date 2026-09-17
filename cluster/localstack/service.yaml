@@ -9,7 +9,7 @@ spec:
   ports:
   - port: 4566
     targetPort: 4566
-    nodePort: 4566
+    nodePort: 30566
     name: api
   selector:
     app: localstack
