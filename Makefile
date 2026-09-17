@@ -91,7 +91,7 @@ demo-sns:
 # Cost analysis
 cost-model:
 	@echo "Generating cost analysis..."
-	python analysis/cost_model.py
+	python3 analysis/cost_model.py
 
 # Cleanup
 clean:
