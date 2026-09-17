@@ -1,7 +1,7 @@
 # KEDA-as-Lambda: Building Serverless Workloads on Kubernetes
 
 > **Status**: Draft for Medium publication
-> **Repo**: [keda-as-lambda](https://github.com/rohanmathure/keda-as-lambda)
+> **Repo**: [rohan-mathure/keda-as-lambda](https://github.com/rohan-mathure/keda-as-lambda)
 > **Author**: Rohan Mathure
 > **Reading time**: ~12 min
 
@@ -209,7 +209,7 @@ brew install k3d helm kubectl
 pip install boto3 awscli-local
 
 # Clone the repo
-git clone https://github.com/rohanmathure/keda-as-lambda.git
+git clone git@github.com:rohan-mathure/keda-as-lambda.git
 cd keda-as-lambda
 ```
 
@@ -421,7 +421,7 @@ KEDA brings serverless semantics to Kubernetes without Lambda's constraints. For
 
 Lambda remains superior for simplicity and low-latency use cases. The optimal choice depends on your workload profile, team expertise, and existing infrastructure.
 
-**Try it**: Clone the [keda-as-lambda](https://github.com/rohanmathure/keda-as-lambda) repo and run `make demo-sqs N=10`. You'll see KEDA spawn 10 jobs in seconds.
+**Try it**: Clone the [keda-as-lambda](https://github.com/rohan-mathure/keda-as-lambda) repo and run `make demo-sqs N=10`. You'll see KEDA spawn 10 jobs in seconds.
 
 ---
 
@@ -446,4 +446,4 @@ Run: `python analysis/cost_model.py`
 
 ---
 
-**Questions?** Open an issue on [GitHub](https://github.com/rohanmathure/keda-as-lambda/issues) or reach out on [Twitter](https://twitter.com/rohanmathure).
+**Questions?** Open an issue on [GitHub](https://github.com/rohan-mathure/keda-as-lambda/issues).

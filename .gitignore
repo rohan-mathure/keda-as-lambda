@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Kubernetes
+kubeconfig.yaml
+.kubeconfig
+
+# Temporary
+*.tmp
+.tmp/
+.cache/
+/tmp/
+
+# LocalStack
+.localstack/
+localstack-data/
+
+# k3d
+.k3d/

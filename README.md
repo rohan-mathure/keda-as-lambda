@@ -4,6 +4,9 @@ Proof of concept: run Lambda-like workloads on KEDA + k3s instead of AWS Lambda.
 
 **Why**: Same K8s governance, no Lambda restrictions (runtime, memory, timeout), lower cost via spot instances.
 
+**Read the analysis**: [MEDIUM_ARTICLE_DRAFT.md](MEDIUM_ARTICLE_DRAFT.md) (detailed comparison, cost model, config breakdown)
+**Read the findings**: [analysis/ANALYSIS.md](analysis/ANALYSIS.md) (governance, trade-offs, recommendations)
+
 ## Prerequisites
 
 ```bash
