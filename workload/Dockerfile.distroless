@@ -1,0 +1,15 @@
+FROM python:3.12 as builder
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --target=/app -r requirements.txt
+
+FROM gcr.io/distroless/python3.12
+
+COPY --from=builder /app /app
+COPY handler.py /app/
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["python", "-u", "handler.py"]
