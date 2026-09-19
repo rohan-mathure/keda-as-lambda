@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-09-19",
+  "scales": {
+    "100000": {
+      "Lambda": 0.0,
+      "KEDA ScaledJob (30s)": 448.93248000000006,
+      "KEDA ScaledJob (1s)": 461.1264000000001,
+      "KEDA Warm Pool": 360,
+      "KEDA ARM (30s)": 285.99647999999996
+    },
+    "1000000": {
+      "Lambda": 20.000040000000002,
+      "KEDA ScaledJob (30s)": 448.93248000000006,
+      "KEDA ScaledJob (1s)": 461.1264000000001,
+      "KEDA Warm Pool": 360,
+      "KEDA ARM (30s)": 285.99647999999996
+    },
+    "10000000": {
+      "Lambda": 941.60184,
+      "KEDA ScaledJob (30s)": 448.93248000000006,
+      "KEDA ScaledJob (1s)": 461.1264000000001,
+      "KEDA Warm Pool": 360,
+      "KEDA ARM (30s)": 285.99647999999996
+    }
+  },
+  "latency_summary": {
+    "lambda": 0.2,
+    "keda_cold_1s_poll": 4.5,
+    "keda_warm_1s_poll": 3.3,
+    "keda_warmpool_1s": 1.0
+  },
+  "prewarming_notes": "Cron baseline already shows warm start effect. DaemonSet eliminates cold outliers."
+}
