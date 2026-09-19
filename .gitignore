@@ -36,3 +36,6 @@ localstack-data/
 
 # k3d
 .k3d/
+
+# Medium article (draft, not committed)
+MEDIUM_ARTICLE*.md

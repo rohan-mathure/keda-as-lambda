@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-09-19T17:03:58.747857",
+  "method": "cron_trigger_from_existing_jobs",
+  "trials": 1,
+  "measurements": [
+    {
+      "job_name": "demo-cron-job-v7f8h",
+      "created": "2026-09-19T17:03:43+00:00",
+      "completed": "2026-09-19T17:03:48+00:00",
+      "duration_seconds": 5.0
+    }
+  ],
+  "stats": {
+    "job_duration": {
+      "count": 1,
+      "min": 5.0,
+      "max": 5.0,
+      "mean": 5.0,
+      "median": 5.0
+    }
+  }
+}

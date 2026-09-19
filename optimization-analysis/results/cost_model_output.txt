@@ -1,0 +1,322 @@
+
+🔬 KEDA vs Lambda Cost Analysis (with ARM64 pricing)
+================================================================================
+
+================================================================================
+Scenario: Dev/Test (10,000 invocations/month)
+================================================================================
+
+AWS Lambda:
+  Invocation cost: $0.00
+  Compute cost (GB-seconds): $0.00
+  Monthly: $0.00
+  Annual: $0.00
+
+KEDA on EKS (x86 / m7i.xlarge):
+  Single node (spot): $37.38/mo (saves $-37.38)
+  Multi-node (spot): $74.75/mo (saves $-74.75)
+
+KEDA on EKS (ARM / m7g.xlarge + Graviton3):
+  Single node (spot): $23.80/mo (saves $-23.80)
+  Multi-node (spot): $47.60/mo (saves $-47.60)
+
+ARM vs x86 savings: $13.58/mo (36.3% cheaper)
+
+
+================================================================================
+Scenario: Small Production (100,000 invocations/month)
+================================================================================
+
+AWS Lambda:
+  Invocation cost: $0.00
+  Compute cost (GB-seconds): $0.00
+  Monthly: $0.00
+  Annual: $0.00
+
+KEDA on EKS (x86 / m7i.xlarge):
+  Single node (spot): $37.38/mo (saves $-37.38)
+  Multi-node (spot): $74.75/mo (saves $-74.75)
+
+KEDA on EKS (ARM / m7g.xlarge + Graviton3):
+  Single node (spot): $23.80/mo (saves $-23.80)
+  Multi-node (spot): $47.60/mo (saves $-47.60)
+
+ARM vs x86 savings: $13.58/mo (36.3% cheaper)
+
+
+================================================================================
+Scenario: Medium Production (1,000,000 invocations/month)
+================================================================================
+
+AWS Lambda:
+  Invocation cost: $0.00
+  Compute cost (GB-seconds): $10.00
+  Monthly: $10.00
+  Annual: $120.00
+
+KEDA on EKS (x86 / m7i.xlarge):
+  Single node (spot): $37.38/mo (saves $-27.38)
+  Multi-node (spot): $74.75/mo (saves $-64.75)
+
+KEDA on EKS (ARM / m7g.xlarge + Graviton3):
+  Single node (spot): $23.80/mo (saves $-13.80)
+  Multi-node (spot): $47.60/mo (saves $-37.60)
+
+ARM vs x86 savings: $13.58/mo (36.3% cheaper)
+
+
+================================================================================
+Scenario: Large Production (10,000,000 invocations/month)
+================================================================================
+
+AWS Lambda:
+  Invocation cost: $1.80
+  Compute cost (GB-seconds): $493.33
+  Monthly: $495.13
+  Annual: $5,941.61
+
+KEDA on EKS (x86 / m7i.xlarge):
+  Single node (spot): $37.38/mo (saves $457.76)
+  Multi-node (spot): $74.75/mo (saves $420.38)
+
+KEDA on EKS (ARM / m7g.xlarge + Graviton3):
+  Single node (spot): $23.80/mo (saves $471.34)
+  Multi-node (spot): $47.60/mo (saves $447.54)
+
+ARM vs x86 savings: $13.58/mo (36.3% cheaper)
+
+
+================================================================================
+Break-Even Analysis (KEDA vs Lambda)
+================================================================================
+
+At what volume does KEDA become cheaper?
+
+      10,000 invocations/mo: $      0 Lambda vs $     24 KEDA — Lambda cheaper
+      50,000 invocations/mo: $      0 Lambda vs $     24 KEDA — Lambda cheaper
+     100,000 invocations/mo: $      0 Lambda vs $     24 KEDA — Lambda cheaper
+     500,000 invocations/mo: $      0 Lambda vs $     24 KEDA — Lambda cheaper
+   1,000,000 invocations/mo: $      2 Lambda vs $     24 KEDA — Lambda cheaper
+   5,000,000 invocations/mo: $     36 Lambda vs $     24 KEDA — ✓ KEDA cheaper (save $12)
+  10,000,000 invocations/mo: $     78 Lambda vs $     24 KEDA — ✓ KEDA cheaper (save $55)
+
+
+JSON output:
+[
+  {
+    "scenario": "Dev/Test",
+    "invocations": 10000,
+    "lambda": {
+      "invocation_cost": 0.0,
+      "compute_cost": 0.0,
+      "total_monthly": 0.0,
+      "total_annual": 0.0
+    },
+    "keda": {
+      "x86_single_node": {
+        "node_cost": 37.376000000000005,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 37.376000000000005,
+        "total_annual": 448.51200000000006,
+        "node_type": "m7i.xlarge",
+        "node_count": 1
+      },
+      "x86_multi_node": {
+        "node_cost": 74.75200000000001,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 74.75200000000001,
+        "total_annual": 897.0240000000001,
+        "node_type": "m7i.xlarge",
+        "node_count": 2
+      },
+      "arm_single_node": {
+        "node_cost": 23.798,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 23.798,
+        "total_annual": 285.57599999999996,
+        "node_type": "m7g.xlarge",
+        "node_count": 1
+      },
+      "arm_multi_node": {
+        "node_cost": 47.596,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 47.596,
+        "total_annual": 571.1519999999999,
+        "node_type": "m7g.xlarge",
+        "node_count": 2
+      }
+    },
+    "savings": {
+      "x86_single": -37.376000000000005,
+      "x86_multi": -74.75200000000001,
+      "arm_single": -23.798,
+      "arm_multi": -47.596
+    }
+  },
+  {
+    "scenario": "Small Production",
+    "invocations": 100000,
+    "lambda": {
+      "invocation_cost": 0.0,
+      "compute_cost": 0.0,
+      "total_monthly": 0.0,
+      "total_annual": 0.0
+    },
+    "keda": {
+      "x86_single_node": {
+        "node_cost": 37.376000000000005,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 37.376000000000005,
+        "total_annual": 448.51200000000006,
+        "node_type": "m7i.xlarge",
+        "node_count": 1
+      },
+      "x86_multi_node": {
+        "node_cost": 74.75200000000001,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 74.75200000000001,
+        "total_annual": 897.0240000000001,
+        "node_type": "m7i.xlarge",
+        "node_count": 2
+      },
+      "arm_single_node": {
+        "node_cost": 23.798,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 23.798,
+        "total_annual": 285.57599999999996,
+        "node_type": "m7g.xlarge",
+        "node_count": 1
+      },
+      "arm_multi_node": {
+        "node_cost": 47.596,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 47.596,
+        "total_annual": 571.1519999999999,
+        "node_type": "m7g.xlarge",
+        "node_count": 2
+      }
+    },
+    "savings": {
+      "x86_single": -37.376000000000005,
+      "x86_multi": -74.75200000000001,
+      "arm_single": -23.798,
+      "arm_multi": -47.596
+    }
+  },
+  {
+    "scenario": "Medium Production",
+    "invocations": 1000000,
+    "lambda": {
+      "invocation_cost": 0.0,
+      "compute_cost": 10.000020000000001,
+      "total_monthly": 10.000020000000001,
+      "total_annual": 120.00024000000002
+    },
+    "keda": {
+      "x86_single_node": {
+        "node_cost": 37.376000000000005,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 37.376000000000005,
+        "total_annual": 448.51200000000006,
+        "node_type": "m7i.xlarge",
+        "node_count": 1
+      },
+      "x86_multi_node": {
+        "node_cost": 74.75200000000001,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 74.75200000000001,
+        "total_annual": 897.0240000000001,
+        "node_type": "m7i.xlarge",
+        "node_count": 2
+      },
+      "arm_single_node": {
+        "node_cost": 23.798,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 23.798,
+        "total_annual": 285.57599999999996,
+        "node_type": "m7g.xlarge",
+        "node_count": 1
+      },
+      "arm_multi_node": {
+        "node_cost": 47.596,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 47.596,
+        "total_annual": 571.1519999999999,
+        "node_type": "m7g.xlarge",
+        "node_count": 2
+      }
+    },
+    "savings": {
+      "x86_single": -27.375980000000006,
+      "x86_multi": -64.75198,
+      "arm_single": -13.797979999999997,
+      "arm_multi": -37.59598
+    }
+  },
+  {
+    "scenario": "Large Production",
+    "invocations": 10000000,
+    "lambda": {
+      "invocation_cost": 1.7999999999999998,
+      "compute_cost": 493.33432000000005,
+      "total_monthly": 495.13432000000006,
+      "total_annual": 5941.6118400000005
+    },
+    "keda": {
+      "x86_single_node": {
+        "node_cost": 37.376000000000005,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 37.376000000000005,
+        "total_annual": 448.51200000000006,
+        "node_type": "m7i.xlarge",
+        "node_count": 1
+      },
+      "x86_multi_node": {
+        "node_cost": 74.75200000000001,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 74.75200000000001,
+        "total_annual": 897.0240000000001,
+        "node_type": "m7i.xlarge",
+        "node_count": 2
+      },
+      "arm_single_node": {
+        "node_cost": 23.798,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 23.798,
+        "total_annual": 285.57599999999996,
+        "node_type": "m7g.xlarge",
+        "node_count": 1
+      },
+      "arm_multi_node": {
+        "node_cost": 47.596,
+        "eks_fee": 73,
+        "data_cost": 0,
+        "total_monthly": 47.596,
+        "total_annual": 571.1519999999999,
+        "node_type": "m7g.xlarge",
+        "node_count": 2
+      }
+    },
+    "savings": {
+      "x86_single": 457.75832,
+      "x86_multi": 420.38232000000005,
+      "arm_single": 471.33632000000006,
+      "arm_multi": 447.53832000000006
+    }
+  }
+]

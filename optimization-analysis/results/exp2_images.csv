@@ -1,0 +1,5 @@
+variant,size_mb,base_image,status
+baseline,270,python:3.12-slim,built
+alpine,135,python:3.12-alpine,built
+distroless,157,gcr.io/distroless/python3:nonroot,built
+multistage,241,python:3.12-slim (stripped),built

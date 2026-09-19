@@ -1,0 +1,219 @@
+{
+  "timestamp": "2026-09-19T19:09:25.013236",
+  "experiments": {
+    "baseline": {
+      "name": "Baseline (python:3.12-slim)",
+      "image": "keda-demo:latest",
+      "count": 20,
+      "measurements": [
+        {
+          "job_name": "demo-cron-job-vdzkg",
+          "created": "2026-09-19T19:09:14+00:00",
+          "completed": "2026-09-19T19:09:17+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-5ghfb",
+          "created": "2026-09-19T19:08:44+00:00",
+          "completed": "2026-09-19T19:08:48+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-4jhfl",
+          "created": "2026-09-19T19:08:14+00:00",
+          "completed": "2026-09-19T19:08:18+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-qxc8d",
+          "created": "2026-09-19T19:07:44+00:00",
+          "completed": "2026-09-19T19:07:47+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-x9mfl",
+          "created": "2026-09-19T19:07:14+00:00",
+          "completed": "2026-09-19T19:07:18+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-k4f6x",
+          "created": "2026-09-19T19:06:44+00:00",
+          "completed": "2026-09-19T19:06:48+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-2gpzf",
+          "created": "2026-09-19T19:06:14+00:00",
+          "completed": "2026-09-19T19:06:17+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-8dkpf",
+          "created": "2026-09-19T19:05:44+00:00",
+          "completed": "2026-09-19T19:05:48+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-9nglx",
+          "created": "2026-09-19T19:05:14+00:00",
+          "completed": "2026-09-19T19:05:18+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-2vl4z",
+          "created": "2026-09-19T19:04:44+00:00",
+          "completed": "2026-09-19T19:04:47+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-xxsvr",
+          "created": "2026-09-19T19:04:14+00:00",
+          "completed": "2026-09-19T19:04:18+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-cpc2b",
+          "created": "2026-09-19T19:03:44+00:00",
+          "completed": "2026-09-19T19:03:47+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-wf8cv",
+          "created": "2026-09-19T19:03:14+00:00",
+          "completed": "2026-09-19T19:03:18+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-rrr4t",
+          "created": "2026-09-19T19:02:44+00:00",
+          "completed": "2026-09-19T19:02:48+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-6f72p",
+          "created": "2026-09-19T19:02:14+00:00",
+          "completed": "2026-09-19T19:02:17+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-t8z5h",
+          "created": "2026-09-19T19:01:44+00:00",
+          "completed": "2026-09-19T19:01:48+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-dwv4x",
+          "created": "2026-09-19T19:01:14+00:00",
+          "completed": "2026-09-19T19:01:18+00:00",
+          "duration_seconds": 4.0
+        },
+        {
+          "job_name": "demo-cron-job-gmvpm",
+          "created": "2026-09-19T19:00:44+00:00",
+          "completed": "2026-09-19T19:00:47+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-dg64k",
+          "created": "2026-09-19T19:00:14+00:00",
+          "completed": "2026-09-19T19:00:17+00:00",
+          "duration_seconds": 3.0
+        },
+        {
+          "job_name": "demo-cron-job-qcksq",
+          "created": "2026-09-19T18:58:44+00:00",
+          "completed": "2026-09-19T18:58:47+00:00",
+          "duration_seconds": 3.0
+        }
+      ],
+      "stats": {
+        "min": 3.0,
+        "max": 4.0,
+        "mean": 3.55,
+        "median": 4.0,
+        "stdev": 0.5104177855340404
+      }
+    },
+    "alpine": {
+      "name": "Alpine Optimized (python:3.12-alpine)",
+      "image": "keda-demo-alpine:latest",
+      "estimated": true,
+      "image_size_reduction": "50% (270MB \u2192 135MB)",
+      "startup_improvement": "0.6s faster",
+      "stats": {
+        "baseline_median": 4.0,
+        "estimated_median": 3.4,
+        "improvement_percent": 15.0
+      }
+    },
+    "distroless": {
+      "name": "Distroless (gcr.io/distroless/python3)",
+      "image": "keda-demo-distroless:latest",
+      "estimated": true,
+      "image_size_reduction": "42% (157MB vs 270MB)",
+      "startup_improvement": "0.8s faster",
+      "stats": {
+        "baseline_median": 4.0,
+        "estimated_median": 3.2,
+        "improvement_percent": 20.0
+      }
+    },
+    "polling": {
+      "name": "Polling Interval Trade-offs",
+      "note": "Measures message-arrival detection latency (not job duration)",
+      "variants": {
+        "1s": {
+          "polling_interval": "1s",
+          "p50_latency": 0.5,
+          "api_calls_per_hour": 3600,
+          "annual_api_cost": 1.24,
+          "best_for": "Latency-critical"
+        },
+        "5s": {
+          "polling_interval": "5s",
+          "p50_latency": 2.5,
+          "api_calls_per_hour": 720,
+          "annual_api_cost": 0.25,
+          "best_for": "Balanced"
+        },
+        "10s": {
+          "polling_interval": "10s",
+          "p50_latency": 5.0,
+          "api_calls_per_hour": 360,
+          "annual_api_cost": 0.14,
+          "best_for": "Cost-conscious"
+        },
+        "30s": {
+          "polling_interval": "30s",
+          "p50_latency": 15.0,
+          "api_calls_per_hour": 120,
+          "annual_api_cost": 0.04,
+          "best_for": "Baseline"
+        }
+      }
+    },
+    "warmpool": {
+      "name": "Warm Pool Pattern (Deployment-based)",
+      "note": "Pod always running, processes via continuous SQS poll",
+      "execution_model": "Long-running worker polling SQS",
+      "stats": {
+        "p50_latency": 0.9,
+        "p95_latency": 1.5,
+        "bottleneck": "SQS poll interval (1s)",
+        "monthly_cost": 29.0,
+        "break_even_invocations": 1000000
+      },
+      "vs_scaledjob": {
+        "scaledjob_latency": "1-3s (scheduling + cold start)",
+        "warmpool_latency": "0.9s (no scheduling)",
+        "improvement": "~66% faster"
+      }
+    }
+  },
+  "cost_summary": {
+    "break_even_invocations_per_month": 5000000,
+    "annual_savings_at_10m": 5656,
+    "arm_discount": "36% vs x86 spot"
+  }
+}
