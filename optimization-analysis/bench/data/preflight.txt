@@ -1,0 +1,53 @@
+date: 2026-09-20T02:58:53Z
+--- tools
+kubectl: /opt/homebrew/bin/kubectl
+docker: /usr/local/bin/docker
+k3d: /opt/homebrew/bin/k3d
+python3: /usr/bin/python3
+--- context
+k3d-keda-lambda
+--- nodes
+NAME                       STATUS   ROLES           AGE     VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE           KERNEL-VERSION     CONTAINER-RUNTIME
+k3d-keda-lambda-agent-0    Ready    <none>          2d23h   v1.34.1+k3s1   172.20.0.4    <none>        K3s v1.34.1+k3s1   6.12.76-linuxkit   containerd://2.1.4-k3s2
+k3d-keda-lambda-agent-1    Ready    <none>          2d23h   v1.34.1+k3s1   172.20.0.5    <none>        K3s v1.34.1+k3s1   6.12.76-linuxkit   containerd://2.1.4-k3s2
+k3d-keda-lambda-server-0   Ready    control-plane   2d23h   v1.34.1+k3s1   172.20.0.3    <none>        K3s v1.34.1+k3s1   6.12.76-linuxkit   containerd://2.1.4-k3s2
+--- keda
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+keda-admission-webhooks           1/1     1            1           2d23h
+keda-operator                     1/1     1            1           2d23h
+keda-operator-metrics-apiserver   1/1     1            1           2d23h
+NAME                 CREATED AT
+scaledjobs.keda.sh   2026-09-17T03:53:39Z
+--- keda image
+ghcr.io/kedacore/keda:2.20.2
+--- docker nodes
+k3d-keda-lambda-serverlb  ghcr.io/k3d-io/k3d-proxy:5.9.0
+k3d-keda-lambda-agent-1  rancher/k3s:latest
+k3d-keda-lambda-agent-0  rancher/k3s:latest
+k3d-keda-lambda-server-0  rancher/k3s:latest
+fitness_tracker_db  timescale/timescaledb:latest-pg15
+fitness_tracker_admin  dpage/pgadmin4:latest
+garmin_mcp_server-scraper-1  garmin_mcp_server-scraper
+garmin_mcp_server-timescaledb-1  timescale/timescaledb:latest-pg16
+--- crictl on node
+node=k3d-keda-lambda-agent-0
+/bin/crictl
+IMAGE                                        TAG                 IMAGE ID            SIZE
+docker.io/library/alpine                     latest              33bee74c45f30       4.2MB
+docker.io/rancher/mirrored-coredns-coredns   1.12.3              7ff8c97cbda19       20.4MB
+docker.io/rancher/mirrored-pause             3.6                 7d46a07936af9       253kB
+ghcr.io/kedacore/keda-metrics-apiserver      2.20.2              50ac16b2af356       60.8MB
+<none>                                       <none>              95963fbb34edf       63.4MB
+docker.io/library/keda-demo-alpine           latest              b12fcac2758d1       35.1MB
+docker.io/library/keda-demo                  alpine              b12fcac2758d1       35.1MB
+--- existing bench ns
+No resources found in bench namespace.
+--- existing scaledjobs
+NAMESPACE   NAME                   MIN   MAX   READY   ACTIVE    PAUSED   TRIGGERS        AUTHENTICATIONS   AGE
+demo        demo-cron-job          0     5     True    True      False    cron                              2d23h
+demo        demo-sqs-job-poll-1    0     10    False   Unknown   False    aws-sqs-queue   aws-credentials   10h
+demo        demo-sqs-job-poll-10   0     10    False   Unknown   False    aws-sqs-queue   aws-credentials   10h
+demo        demo-sqs-job-poll-30   0     10    False   Unknown   False    aws-sqs-queue   aws-credentials   10h
+demo        demo-sqs-job-poll-5    0     10    False   Unknown   False    aws-sqs-queue   aws-credentials   10h
+--- python
+Python 3.9.6

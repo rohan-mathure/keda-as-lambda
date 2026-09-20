@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bench
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: redis, namespace: bench}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: redis}}
+  template:
+    metadata: {labels: {app: redis}}
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports: [{containerPort: 6379}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis, namespace: bench}
+spec:
+  selector: {app: redis}
+  ports: [{port: 6379, targetPort: 6379}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: pusher, namespace: bench}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: pusher}}
+  template:
+    metadata: {labels: {app: pusher}}
+    spec:
+      containers:
+      - name: pusher
+        image: python:3.12-alpine
+        command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: watcher, namespace: bench}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: watcher, namespace: bench}
+rules:
+- apiGroups: [""]
+  resources: ["pods", "events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: watcher, namespace: bench}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: watcher}
+subjects: [{kind: ServiceAccount, name: watcher, namespace: bench}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: watcher, namespace: bench}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: watcher}}
+  template:
+    metadata: {labels: {app: watcher}}
+    spec:
+      serviceAccountName: watcher
+      containers:
+      - name: watcher
+        image: python:3.12-alpine
+        command: ["python", "-u", "/app/watcher.py"]
+        volumeMounts: [{name: script, mountPath: /app}]
+      volumes:
+      - name: script
+        configMap: {name: watcher-script}

@@ -1,0 +1,24 @@
+{
+ "tag": "full_20260920T033600",
+ "seed": 1789875360,
+ "n": 20,
+ "order": [
+  "poll1",
+  "slim_cold",
+  "poll30",
+  "poll10",
+  "poll5",
+  "alpine_cold",
+  "warm_poll1s",
+  "warm_blpop",
+  "alpine_warm",
+  "distroless_cold"
+ ],
+ "kubectl": "{\n  \"clientVersion\": {\n    \"major\": \"1\",\n    \"minor\": \"37\",\n    \"gitVersion\": \"v1.37.0\",\n    \"gitCommit\": \"f54c212e3a2f75d674b717a9b29052b20b60aefc\",\n    \"gitTreeState\": \"clean\",\n    \"buildDate\": \"2026-08-26T10:44:20Z\",\n    \"goVersion\": \"go1.27.0\",\n    \"compiler\": \"gc\",\n    \"platform\": \"darwin/arm64\"\n  },\n  \"kustomizeVersion\": \"v5.8.1\"\n}\n",
+ "keda_image": "ghcr.io/kedacore/keda:2.20.2",
+ "nodes": [
+  "node/k3d-keda-lambda-agent-0",
+  "node/k3d-keda-lambda-agent-1",
+  "node/k3d-keda-lambda-server-0"
+ ]
+}
